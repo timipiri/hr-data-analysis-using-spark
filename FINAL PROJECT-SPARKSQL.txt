@@ -1,0 +1,115 @@
+# Import necessary libraries
+from pyspark.sql import SparkSession
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DoubleType
+from pyspark.sql.functions import col, avg, max, count
+
+# Create a Spark session
+spark = SparkSession.builder.appName("FinalProject").getOrCreate()
+
+# Task 1: Generate DataFrame from CSV data
+spark = SparkSession.builder.appName("EmployeeData").getOrCreate()
+
+import wget
+wget.download("your_link_to_file/employees.csv")
+
+# Load CSV data into DataFrame
+employees_df = spark.read.csv("employees.csv", header=True, inferSchema=True)
+
+# Task 2: Define a schema for the data
+schema = StructType([
+    StructField("Emp_No", IntegerType(), True),
+    StructField("Emp_Name", StringType(), True),
+    StructField("Salary", DoubleType(), True),
+    StructField("Age", IntegerType(), True),
+    StructField("Department", StringType(), True)
+    
+])
+
+# Apply the defined schema to the DataFrame
+df = spark.read.csv("employees.csv", header=True, schema=schema)
+
+# Task 3: Display schema of DataFrame
+df.printSchema()
+
+# Task 4: Create a temporary view
+df.createOrReplaceTempView("employee_data")
+
+# Task 5: Execute an SQL query
+it_employees = spark.sql("SELECT * FROM employee_data WHERE age > 30")
+it_employees.show()
+
+# Task 6: Calculate Average Salary by Department
+avg_salary_by_dept = df.groupBy("Department").agg(avg("Salary").alias("AvgSalary"))
+avg_salary_by_dept.show()
+
+# Task 7: Filter and Display IT Department Employees
+it_department_df = employees_df.filter(col("Department") == "IT")
+
+# Display the filtered DataFrame
+it_department_df.show()
+
+# Task 8: Add 10% Bonus to Salaries
+from pyspark.sql.functions import col
+
+# Add a new column "SalaryAfterBonus" with 10% bonus added to the original salary
+employees_df_with_bonus = employees_df.withColumn("SalaryAfterBonus", col("Salary") * 1.1)
+
+# Display the DataFrame with the new column
+employees_df_with_bonus.show()
+
+# Task 9: Find Maximum Salary by Age
+from pyspark.sql.functions import max
+
+# Group data by age and calculate the maximum salary for each age group
+
+max_salary_by_age_group = employees_df.groupBy("Age").agg(max("Salary").alias("MaxSalary"))
+
+# Display the result
+max_salary_by_age_group.show()
+
+# Task 10: Self-Join on Employee Data (you'll need to define join conditions)
+
+self_join_result = employees_df.alias("emp1").join(employees_df.alias("emp2"), col("emp1.Emp_No") == col("emp2.Emp_No"), "inner")
+
+# Display the result
+self_join_result.show()
+
+# Task 11: Calculate Average Employee Age
+from pyspark.sql.functions import avg 
+
+avg_age = employees_df.agg(avg("Age").alias("AverageAge"))
+
+# Display the result
+avg_age.show()
+
+# Task 12: Calculate Total Salary by Department
+from pyspark.sql.functions import sum 
+
+total_salary_by_department = employees_df.groupBy("Department").agg(sum("Salary").alias("TotalSalary"))
+
+# Display the result
+total_salary_by_department.show()
+
+# Task 13: Sort Data by Age and Salary
+sorted_df = employees_df.orderBy(col("Age").asc(), col("Salary").desc())
+
+# Display the sorted DataFrame
+sorted_df.show()
+
+# Task 14: Count Employees in Each Department
+from pyspark.sql.functions import count
+
+# Calculate the number of employees in each department
+employee_count_by_department = employees_df.groupBy("Department").count()
+
+# Display the result
+employee_count_by_department.show()
+
+# Task 15: Filter Employees with the letter 'o' in the Name
+employees_with_o_in_name = employees_df.filter("Emp_Name LIKE '%o%'")
+
+# Display the filtered DataFrame
+employees_with_o_in_name.show()
+
+# Stop the Spark session
+spark.stop()
